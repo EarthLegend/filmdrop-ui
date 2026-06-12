@@ -275,6 +275,43 @@ describe('ConfigHelper', () => {
       )
     })
 
+    it('should store render handles instead of expanded params when TILER_RESOLVES_RENDERS', () => {
+      const config = {
+        SCENE_TILER_URL: 'https://example.com/lgnd-titiler',
+        TILER_RESOLVES_RENDERS: true,
+        COLLECTIONS_CONFIG: {
+          planet: {}
+        },
+        _STAC_COLLECTIONS: [
+          {
+            id: 'planet',
+            renders: {
+              'true-color': {
+                title: 'True Color',
+                assets: ['analytic_cog'],
+                asset_bidx: ['analytic_cog|6,4,2'],
+                rescale: [[0, 8000]]
+              },
+              ndvi: {
+                expression: '(b8-b6)/(b8+b6)',
+                colormap_name: 'rdylgn'
+              }
+            }
+          }
+        ]
+      }
+
+      const result = autoConfigureRendering(config)
+      const visualizations = result.COLLECTIONS_CONFIG.planet.visualizations
+
+      // Named handles only — the tiler resolves the preset server-side.
+      expect(visualizations['true-color']).toEqual({
+        render: 'true-color',
+        title: 'True Color'
+      })
+      expect(visualizations.ndvi).toEqual({ render: 'ndvi' })
+    })
+
     it('should map render extension fields to TiTiler parameters', () => {
       const config = {
         SCENE_TILER_URL: 'https://example.com/titiler',

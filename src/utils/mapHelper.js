@@ -616,6 +616,13 @@ const constructSceneTilerParams = (
 
   if (!tilerParams) return ''
 
+  // A `render` key delegates all rendering to the tiler (lgnd-titiler
+  // resolves the named preset from the collection's render extension
+  // server-side), so the visualization carries no expanded params.
+  if (tilerParams.render) {
+    return `render=${encodeURIComponent(tilerParams.render)}`
+  }
+
   const params = []
 
   // Unscale applies scale/offset metadata.
@@ -751,6 +758,13 @@ export const constructMosaicTilerParams = (collection) => {
   const tilerParams = getCollectionConfig(collection, 'mosaicTilerParams')
   if (!tilerParams) return ''
 
+  // A `render` key delegates all rendering to the tiler (lgnd-titiler's
+  // mosaic tile links carry `collection=`, so the named preset resolves
+  // server-side) — no expanded params from the client.
+  if (tilerParams.render) {
+    return `render=${encodeURIComponent(tilerParams.render)}`
+  }
+
   const params = []
 
   // Unscale applies scale/offset metadata. Default on for expression-based
@@ -785,6 +799,18 @@ export const constructMosaicTilerParams = (collection) => {
   return params.join('&')
 }
 
+// lgnd-titiler mosaic links are templated on {tileMatrixSetId} and already
+// carry a query string (?url=dynamodb://...&collection=...); e84
+// mosaic-titiler links are bare paths. Handle both shapes.
+const resolveTileMatrixSet = (href) =>
+  href?.replace('{tileMatrixSetId}', 'WebMercatorQuad')
+
+export const buildMosaicTileUrl = (href, imgFormat, tilerParams) => {
+  const [path, query] = resolveTileMatrixSet(href).split('?')
+  const params = [query, tilerParams].filter(Boolean).join('&')
+  return `${path}.${imgFormat}?${params}`
+}
+
 export async function addMosaicLayer(json) {
   const map = store.getState().mainSlice.map
   if (map && Object.keys(map).length > 0) {
@@ -795,10 +821,14 @@ export async function addMosaicLayer(json) {
       (el) => el.rel === 'tiles'
     )?.href
     const tilerParams = constructMosaicTilerParams(_selectedCollectionData.id)
-    const mosaicURL = `${baseTileLayerHref}.${imgFormat}?${tilerParams}`
-    const baseTileLayerHrefForBounds = json?.links?.find(
-      (el) => el.rel === 'tilejson'
-    )?.href
+    const mosaicURL = buildMosaicTileUrl(
+      baseTileLayerHref,
+      imgFormat,
+      tilerParams
+    )
+    const baseTileLayerHrefForBounds = resolveTileMatrixSet(
+      json?.links?.find((el) => el.rel === 'tilejson')?.href
+    )
     GetMosaicBoundsService(baseTileLayerHrefForBounds).then(function (bounds) {
       const mosaicBounds = leafletBoundsFromBBOX(bounds)
       const tileLayerParams = getTileLayerParams(_selectedCollectionData.id)

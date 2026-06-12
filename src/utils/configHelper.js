@@ -428,6 +428,19 @@ export function autoConfigureRendering(config) {
     // Process all render definitions and store them
     for (const renderKey of renderKeys) {
       const renderDef = renders[renderKey]
+
+      // TILER_RESOLVES_RENDERS: the tiler (lgnd-titiler) resolves render
+      // presets from the collection server-side, so each visualization is
+      // just a named handle (`render=<key>`) — no client-side expansion of
+      // the render definition, keeping rendering logic in one place.
+      if (config.TILER_RESOLVES_RENDERS) {
+        collectionsConfig[collectionId].visualizations[renderKey] = {
+          render: renderKey,
+          ...(renderDef.title ? { title: renderDef.title } : {})
+        }
+        continue
+      }
+
       const processedRender = {}
 
       // Required: assets

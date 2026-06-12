@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { store } from '../redux/store'
 import {
+  buildMosaicTileUrl,
+  constructMosaicTilerParams,
   roundCoord,
   bboxFromMapBounds,
   clampAndRoundBbox,
@@ -84,6 +86,68 @@ describe('mapHelper bbox precision', () => {
         }
       }
       expect(() => zoomToCollectionExtent(collection, {})).not.toThrow()
+    })
+  })
+})
+
+describe('tiler-resolved rendering (lgnd-titiler)', () => {
+  describe('buildMosaicTileUrl', () => {
+    it('appends format and params to a bare e84-style href', () => {
+      expect(
+        buildMosaicTileUrl(
+          'https://tiler.test/mosaicjson/tiles/{z}/{x}/{y}',
+          'png',
+          'rescale=0,100'
+        )
+      ).toBe(
+        'https://tiler.test/mosaicjson/tiles/{z}/{x}/{y}.png?rescale=0,100'
+      )
+    })
+
+    it('handles lgnd-titiler templated hrefs that already carry a query', () => {
+      expect(
+        buildMosaicTileUrl(
+          'https://tiler.test/mosaicjson/tiles/{tileMatrixSetId}/{z}/{x}/{y}?url=dynamodb%3A%2F%2Fus-west-2%2Ftable%3Aabc&collection=https%3A%2F%2Fstac.test%2Fcollections%2Fc1',
+          'png',
+          'render=true-color'
+        )
+      ).toBe(
+        'https://tiler.test/mosaicjson/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=dynamodb%3A%2F%2Fus-west-2%2Ftable%3Aabc&collection=https%3A%2F%2Fstac.test%2Fcollections%2Fc1&render=true-color'
+      )
+    })
+
+    it('keeps the embedded query when there are no tiler params', () => {
+      expect(
+        buildMosaicTileUrl(
+          'https://tiler.test/mosaicjson/tiles/{tileMatrixSetId}/{z}/{x}/{y}?url=abc',
+          'png',
+          ''
+        )
+      ).toBe(
+        'https://tiler.test/mosaicjson/tiles/WebMercatorQuad/{z}/{x}/{y}.png?url=abc'
+      )
+    })
+  })
+
+  describe('constructMosaicTilerParams with render handle', () => {
+    it('emits only render= when mosaicTilerParams has a render key', () => {
+      vi.spyOn(store, 'getState').mockReturnValue({
+        mainSlice: {
+          appConfig: {
+            COLLECTIONS_CONFIG: {
+              c1: {
+                mosaicTilerParams: {
+                  render: 'color-infrared',
+                  // expanded params must be ignored when render is present
+                  rescale: ['0,100']
+                }
+              }
+            }
+          }
+        }
+      })
+      expect(constructMosaicTilerParams('c1')).toBe('render=color-infrared')
+      vi.restoreAllMocks()
     })
   })
 })

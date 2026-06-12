@@ -139,12 +139,13 @@ cache-breaker to prevent stale files.
 
 #### Tiling Configuration
 
-| Parameter          | Type   | Default | Description                                                                                           |
-| ------------------ | ------ | ------- | ----------------------------------------------------------------------------------------------------- |
-| `SCENE_TILER_URL`  | String | -       | TiTiler endpoint for scene tiling                                                                     |
-| `MOSAIC_TILER_URL` | String | -       | TiTiler mosaic endpoint (requires [NASA IMPACT TiTiler fork](https://github.com/NASA-IMPACT/titiler)) |
-| `MOSAIC_MAX_ITEMS` | Number | `100`   | Maximum items in mosaic                                                                               |
-| `TILER_SETTINGS`   | Object | -       | TiTiler behavior settings. See [TILER_SETTINGS](#tiler_settings)                                      |
+| Parameter                | Type    | Default | Description                                                                                                    |
+| ------------------------ | ------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `SCENE_TILER_URL`        | String  | -       | TiTiler endpoint for scene tiling                                                                              |
+| `MOSAIC_TILER_URL`       | String  | -       | TiTiler mosaic endpoint (requires [NASA IMPACT TiTiler fork](https://github.com/NASA-IMPACT/titiler))          |
+| `MOSAIC_MAX_ITEMS`       | Number  | `100`   | Maximum items in mosaic                                                                                        |
+| `TILER_SETTINGS`         | Object  | -       | TiTiler behavior settings. See [TILER_SETTINGS](#tiler_settings)                                               |
+| `TILER_RESOLVES_RENDERS` | Boolean | `false` | Tiler resolves render presets server-side; tile URLs carry `render=<id>`. See [LGND-README.md](LGND-README.md) |
 
 #### Layer and Collection Configuration
 
